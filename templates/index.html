@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🐳 Docker Command Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007acc;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 30px;
+        }
+
+        form {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px 30px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005f99;
+        }
+
+        .success {
+            background: #e6ffed;
+            border-left: 4px solid #2ecc71;
+            padding: 10px;
+            max-width: 600px;
+        }
+
+        .error {
+            background: #ffe6e6;
+            border-left: 4px solid #e74c3c;
+            padding: 10px;
+            max-width: 600px;
+        }
+
+        pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐳 Docker Command Manager (Flask)</h1>
+
+    <h3>1️⃣ SSH Connection</h3>
+    <form method="POST">
+        <label>Host:</label><input type="text" name="hostname" placeholder="Enter your system IP" value="{{ request.form.get('hostname', '') }}" required>
+        <label>User:</label><input type="text" name="username" placeholder="Enter your Linux username" value="{{ request.form.get('username', '') }}" required>
+        <label>Password:</label><input type="password" name="password" placeholder="Enter your password" required>
+        <button name="connect" type="submit">Connect</button>
+    </form>
+
+    <h3>🔌 Disconnect</h3>
+    <form method="POST">
+        <button name="disconnect" type="submit">Disconnect</button>
+    </form>
+
+    <h3>2️⃣ Run Docker Command</h3>
+    <form method="POST">
+        <label>Pick Command:</label>
+        <select name="docker_command" onchange="this.form.submit()">
+            {% for opt in options %}
+                <option value="{{ opt }}" {% if request.form.get('docker_command') == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+        </select>
+
+        {% if request.form.get('docker_command') in ["docker stop", "docker start", "docker restart", "docker rm", "docker logs", "docker inspect", "docker exec"] %}
+            <label>Container ID:</label><input type="text" name="container_id" value="{{ request.form.get('container_id', '') }}">
+        {% endif %}
+
+        {% if request.form.get('docker_command') == "docker exec" %}
+            <label>Exec Command:</label><input type="text" name="exec_cmd" value="{{ request.form.get('exec_cmd', '') }}">
+        {% endif %}
+
+        {% if request.form.get('docker_command') == "docker pull" %}
+            <label>Image Name:</label><input type="text" name="image_name" value="{{ request.form.get('image_name', '') }}">
+            <label>Tag:</label><input type="text" name="tag" value="{{ request.form.get('tag', 'latest') }}">
+        {% endif %}
+
+        {% if request.form.get('docker_command') == "docker rmi" %}
+            <label>Image Name:</label><input type="text" name="image_name" value="{{ request.form.get('image_name', '') }}">
+            <label>Tag (optional):</label><input type="text" name="tag" value="{{ request.form.get('tag', '') }}">
+        {% endif %}
+
+        {% if request.form.get('docker_command') == "docker build" %}
+            <label>Image Name:</label><input type="text" name="image_name" value="{{ request.form.get('image_name', '') }}">
+            <label>Tag:</label><input type="text" name="tag" value="{{ request.form.get('tag', '') }}">
+            <label>Path to Dockerfile:</label><input type="text" name="path" value="{{ request.form.get('path', '') }}">
+        {% endif %}
+
+        {% if request.form.get('docker_command') == "docker run" %}
+            <label>Image Name (with tag):</label><input type="text" name="image_name" value="{{ request.form.get('image_name', '') }}">
+            <label>Options:</label><input type="text" name="options_run" value="{{ request.form.get('options_run', '-it --rm') }}">
+            <label>Command inside container:</label><input type="text" name="cmd_inside" value="{{ request.form.get('cmd_inside', '/bin/bash') }}">
+        {% endif %}
+
+        {% if request.form.get('docker_command') == "Custom command" %}
+            <label>Custom Command:</label><input type="text" name="custom_command" value="{{ request.form.get('custom_command', '') }}">
+        {% endif %}
+
+        <button name="run" type="submit">🐳 Run Docker Command</button>
+    </form>
+
+    {% if output %}
+        <div class="success">
+            <h3>✅ Output</h3>
+            <pre>{{ output }}</pre>
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="error">
+            <h3>⚠️ Errors</h3>
+            <pre>{{ error }}</pre>
+        </div>
+    {% endif %}
+</body>
+</html>
